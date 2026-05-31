@@ -3,6 +3,7 @@ backend/node_modules/
 frontend/node_modules/
 backend/.env
 backend/uploads/
+backend/serviceAccountKey.json
 frontend/dist/
 .DS_Store
 *.log

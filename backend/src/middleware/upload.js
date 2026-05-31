@@ -1,17 +1,7 @@
 const multer = require('multer');
 const path = require('path');
-const cloudinary = require('cloudinary').v2;
 
-// Configure Cloudinary
-if (process.env.CLOUDINARY_CLOUD_NAME) {
-  cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET,
-  });
-}
-
-// Use memory storage — we'll upload to Cloudinary manually in getFileUrl
+// Use memory storage — files will be uploaded to Firebase Storage via getFileUrl
 const storage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
@@ -31,4 +21,3 @@ const upload = multer({
 });
 
 module.exports = upload;
-module.exports.cloudinary = cloudinary;
