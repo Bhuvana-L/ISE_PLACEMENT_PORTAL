@@ -1,0 +1,62 @@
+require('dotenv').config();
+const dns = require('dns');
+dns.setServers(['8.8.8.8', '8.8.4.4']);
+
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
+const path = require('path');
+
+const authRoutes = require('./routes/auth');
+const adminRoutes = require('./routes/admin');
+const coordinatorRoutes = require('./routes/coordinator');
+const studentRoutes = require('./routes/student');
+
+const app = express();
+
+// CORS - allow localhost in dev, same origin in production
+const allowedOrigins = ['http://localhost:5173', 'http://localhost:5000'];
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV === 'production') {
+      callback(null, true);
+    } else {
+      callback(null, true); // Allow all in dev
+    }
+  },
+  credentials: true,
+}));
+
+app.use(express.json());
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
+app.use('/api/auth', authRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/coordinator', coordinatorRoutes);
+app.use('/api/student', studentRoutes);
+
+// Serve frontend in production
+const frontendPath = path.join(__dirname, '../../frontend/dist');
+app.use(express.static(frontendPath));
+app.get('*', (req, res) => {
+  if (!req.path.startsWith('/api') && !req.path.startsWith('/uploads')) {
+    res.sendFile(path.join(frontendPath, 'index.html'));
+  }
+});
+
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ message: 'Internal server error', error: err.message });
+});
+
+const PORT = process.env.PORT || 5000;
+
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => {
+    console.log('MongoDB connected');
+    app.listen(PORT, () =>
+      console.log(`Server running on port ${PORT}`)
+    );
+  })
+  .catch((err) => console.error('MongoDB connection error:', err));

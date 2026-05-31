@@ -1,0 +1,18 @@
+{
+  "name": "GSSS ISE Placement Portal",
+  "short_name": "ISE Placement",
+  "description": "GSSS ISE Department Placement Management Portal",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4F46E5",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

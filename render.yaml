@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: ise-placement
+    runtime: node
+    buildCommand: npm run install-all && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: BREVO_API_KEY
+        sync: false
+      - key: BREVO_SENDER
+        sync: false
