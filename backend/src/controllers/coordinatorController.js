@@ -515,7 +515,7 @@ exports.getUpdatedStudentList = async (req, res) => {
   try {
     const batch = req.user.assignedBatch;
     const students = await User.find({ role: 'student', batch }).select(
-      'name usn email phone cgpa sgpaList backlogs activeBacklogs batch department isVerified sentToAdmin resumeUrl updatedAt'
+      'name usn email phone cgpa sgpaList backlogs activeBacklogs batch department isVerified sentToAdmin resumeUrl marksheetUrl updatedAt'
     ).sort({ usn: 1 });
     res.json({ students });
   } catch (err) {

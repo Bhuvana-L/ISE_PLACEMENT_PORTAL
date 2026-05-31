@@ -349,7 +349,7 @@ export default function AdminDashboard() {
             <table className="w-full text-sm">
               <thead className="bg-gray-50 border-b border-gray-100">
                 <tr>
-                  {['Name', 'USN', 'Email', 'Batch', 'CGPA', 'Backlogs', 'Active', 'Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5', 'Sem 6', 'Sem 7', 'Sem 8', 'Resume', 'Status'].map((h) => (
+                  {['Name', 'USN', 'Email', 'Batch', 'CGPA', 'Backlogs', 'Active', 'Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5', 'Sem 6', 'Sem 7', 'Sem 8', 'Resume', 'Marksheet', 'Status'].map((h) => (
                     <th key={h} className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wide px-3 py-3 whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
@@ -381,6 +381,9 @@ export default function AdminDashboard() {
                       ))}
                       <td className="px-3 py-3">
                         {s.resumeUrl ? <a href={s.resumeUrl} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline text-xs">View</a> : <span className="text-gray-400 text-xs">—</span>}
+                      </td>
+                      <td className="px-3 py-3">
+                        {s.marksheetUrl ? <a href={s.marksheetUrl} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline text-xs">View</a> : <span className="text-gray-400 text-xs">—</span>}
                       </td>
                       <td className="px-3 py-3">
                         {s.sentToAdmin ? <span className="badge-green text-xs">Received</span> : <span className="badge-yellow text-xs">Pending</span>}

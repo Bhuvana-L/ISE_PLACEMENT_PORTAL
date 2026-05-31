@@ -62,6 +62,8 @@ export default function StudentProfile() {
     setSaving(true);
     try {
       const fd = new FormData();
+
+      // Always send basic fields
       fd.append('phone', phone);
       fd.append('headline', headline);
       fd.append('about', about);
@@ -76,10 +78,18 @@ export default function StudentProfile() {
       fd.append('backlogs', backlogs);
       fd.append('activeBacklogs', activeBacklogs);
       fd.append('courses', JSON.stringify(courses));
-      fd.append('sgpaList', JSON.stringify(sgpaList));
+
+      // Send SGPA list and CGPA for academics section
+      if (sgpaList.length > 0) {
+        fd.append('sgpaList', JSON.stringify(sgpaList));
+      }
+      if (section === 'academics' && cgpaInput) {
+        fd.append('cgpa', cgpaInput);
+      }
+
+      // Files
       if (resume) fd.append('resume', resume);
       if (marksheet) fd.append('marksheet', marksheet);
-      // Append semester marksheets
       Object.entries(semMarksheets).forEach(([sem, file]) => {
         if (file instanceof File) {
           fd.append(`marksheet_${sem}`, file);
