@@ -41,12 +41,18 @@ app.get('/api/files/:id', async (req, res) => {
     const FileStore = require('./models/FileStore');
     const file = await FileStore.findById(req.params.id);
     if (!file) return res.status(404).json({ message: 'File not found' });
-    res.set('Content-Type', file.mimeType);
+    res.set('Content-Type', file.mimeType || 'application/octet-stream');
     res.set('Content-Disposition', `inline; filename="${file.originalName}"`);
+    res.set('Cache-Control', 'public, max-age=86400');
     res.send(file.data);
   } catch (err) {
     res.status(500).json({ message: 'Error retrieving file' });
   }
+});
+
+// Handle old local upload paths - redirect to a "file not found" message
+app.get('/uploads/*', (req, res) => {
+  res.status(404).json({ message: 'File was stored locally. Please re-upload the file.' });
 });
 
 // Serve frontend in production
