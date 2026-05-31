@@ -30,18 +30,20 @@ if (useCloudinary) {
     cloudinary,
     params: async (req, file) => {
       const folder = `ise-placement/${req.user?._id || 'general'}`;
-      const ext = path.extname(file.originalname).toLowerCase();
-      let resourceType = 'auto';
-      if (['.pdf', '.doc', '.docx', '.xlsx', '.xls', '.csv'].includes(ext)) {
-        resourceType = 'raw';
-      }
-      // Name file as: fieldname-username.ext (e.g. resume-bhuvana-l.pdf)
+      const ext = path.extname(file.originalname).toLowerCase().replace('.', '');
       const userName = (req.user?.name || 'user').toLowerCase().replace(/[^a-z0-9]/g, '-');
+      
+      // Use 'image' for images and PDFs (Cloudinary serves PDFs inline as image type)
+      // Use 'raw' only for docs, xlsx, csv
+      const imageTypes = ['jpg', 'jpeg', 'png', 'pdf'];
+      const resourceType = imageTypes.includes(ext) ? 'image' : 'raw';
+      
       return {
         folder,
         resource_type: resourceType,
-        public_id: `${file.fieldname}-${userName}${ext}`,
-        allowed_formats: ['pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx', 'xlsx', 'xls', 'csv'],
+        public_id: `${file.fieldname}-${userName}`,
+        format: ext,
+        overwrite: true,
       };
     },
   });

@@ -287,6 +287,7 @@ exports.exportStudentProfiles = async (req, res) => {
       { header: 'GitHub', key: 'github', width: 30 },
       { header: 'Portfolio', key: 'portfolio', width: 30 },
       { header: 'Resume', key: 'resume', width: 30 },
+      { header: 'Marksheet', key: 'marksheet', width: 30 },
       { header: 'Sem 1 SGPA', key: 'sem1', width: 12 },
       { header: 'Sem 2 SGPA', key: 'sem2', width: 12 },
       { header: 'Sem 3 SGPA', key: 'sem3', width: 12 },
@@ -326,6 +327,7 @@ exports.exportStudentProfiles = async (req, res) => {
         github: s.githubUrl || '',
         portfolio: s.portfolioUrl || '',
         resume: s.resumeUrl ? 'View Resume' : '',
+        marksheet: s.marksheetUrl ? 'View Marksheet' : '',
         sem1: sgpaMap[1], sem2: sgpaMap[2], sem3: sgpaMap[3], sem4: sgpaMap[4],
         sem5: sgpaMap[5], sem6: sgpaMap[6], sem7: sgpaMap[7], sem8: sgpaMap[8],
       };
@@ -335,7 +337,15 @@ exports.exportStudentProfiles = async (req, res) => {
         const resumeColIndex = exportColumns.findIndex((c) => c.key === 'resume');
         if (resumeColIndex >= 0) {
           const cell = addedRow.getCell(resumeColIndex + 1);
-          cell.value = { text: 'View Resume', hyperlink: `${baseUrl}${s.resumeUrl}` };
+          cell.value = { text: 'View Resume', hyperlink: s.resumeUrl };
+          cell.font = { color: { argb: 'FF4F46E5' }, underline: true };
+        }
+      }
+      if (s.marksheetUrl) {
+        const colIdx = exportColumns.findIndex((c) => c.key === 'marksheet');
+        if (colIdx >= 0) {
+          const cell = addedRow.getCell(colIdx + 1);
+          cell.value = { text: 'View Marksheet', hyperlink: s.marksheetUrl };
           cell.font = { color: { argb: 'FF4F46E5' }, underline: true };
         }
       }

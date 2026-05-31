@@ -41,7 +41,7 @@ export default function AdminStudents() {
     { key: 'projects', label: 'Projects' }, { key: 'experience', label: 'Experience' },
     { key: 'certifications', label: 'Certifications' }, { key: 'courses', label: 'Courses' },
     { key: 'linkedin', label: 'LinkedIn' }, { key: 'github', label: 'GitHub' }, { key: 'portfolio', label: 'Portfolio' },
-    { key: 'resume', label: 'Resume' },
+    { key: 'resume', label: 'Resume' }, { key: 'marksheet', label: 'Marksheet' },
     { key: 'sem1', label: 'Sem 1' }, { key: 'sem2', label: 'Sem 2' }, { key: 'sem3', label: 'Sem 3' }, { key: 'sem4', label: 'Sem 4' },
     { key: 'sem5', label: 'Sem 5' }, { key: 'sem6', label: 'Sem 6' }, { key: 'sem7', label: 'Sem 7' }, { key: 'sem8', label: 'Sem 8' },
   ];

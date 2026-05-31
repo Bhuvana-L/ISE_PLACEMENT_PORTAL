@@ -1,15 +1,15 @@
 const FileStore = require('../models/FileStore');
-const { useCloudinary } = require('../middleware/upload');
 
 /**
  * Get the URL for an uploaded file.
  * - Cloudinary: file.path contains the full URL
  * - MongoDB fallback: save buffer to MongoDB, return API URL
- * - Local: build URL from /uploads/userId/filename
  */
 async function getFileUrl(file, userId) {
   // Cloudinary — file.path is the full URL
   if (file.path && file.path.startsWith('http')) {
+    // For Cloudinary raw files, we need to ensure proper access
+    // The URL from multer-storage-cloudinary is already correct
     return file.path;
   }
 
