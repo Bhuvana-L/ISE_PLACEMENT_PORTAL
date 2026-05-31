@@ -57,7 +57,7 @@ exports.submitForm = async (req, res) => {
     const fileUrls = new Map();
     if (req.files) {
       for (const file of req.files) {
-        const url = await getFileUrl(file, req.user._id);
+        const url = await getFileUrl(file, req.user._id, req.user.name);
         fileUrls.set(file.fieldname, url);
       }
     }
@@ -103,7 +103,7 @@ exports.updateSubmission = async (req, res) => {
     if (req.files && req.files.length > 0) {
       const fileUrls = existing.fileUrls || new Map();
       for (const file of req.files) {
-        const url = await getFileUrl(file, req.user._id);
+        const url = await getFileUrl(file, req.user._id, req.user.name);
         fileUrls.set(file.fieldname, url);
       }
       existing.fileUrls = fileUrls;
@@ -177,7 +177,7 @@ exports.updateProfile = async (req, res) => {
 
     if (req.files && req.files.length > 0) {
       for (const file of req.files) {
-        const url = await getFileUrl(file, req.user._id);
+        const url = await getFileUrl(file, req.user._id, req.user.name);
         if (file.fieldname === 'resume') updates.resumeUrl = url;
         if (file.fieldname === 'marksheet') updates.marksheetUrl = url;
         // Handle semester marksheets (marksheet_1, marksheet_2, etc.)
@@ -207,7 +207,7 @@ exports.updateProfile = async (req, res) => {
 exports.uploadMarksheet = async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
-    const url = await getFileUrl(req.file, req.user._id);
+    const url = await getFileUrl(req.file, req.user._id, req.user.name);
     await User.findByIdAndUpdate(req.user._id, { marksheetUrl: url });
     res.json({ url, message: 'Marksheet uploaded successfully' });
   } catch (err) {

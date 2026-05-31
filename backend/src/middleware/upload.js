@@ -1,56 +1,18 @@
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
+const cloudinary = require('cloudinary').v2;
 
-let cloudinary;
-let CloudinaryStorage;
-let useCloudinary = false;
-
-try {
-  cloudinary = require('cloudinary').v2;
-  const csMod = require('multer-storage-cloudinary');
-  CloudinaryStorage = csMod.CloudinaryStorage;
-
-  if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
-    cloudinary.config({
-      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-      api_key: process.env.CLOUDINARY_API_KEY,
-      api_secret: process.env.CLOUDINARY_API_SECRET,
-    });
-    useCloudinary = true;
-  }
-} catch (e) {
-  // Cloudinary not available
-}
-
-let storage;
-
-if (useCloudinary) {
-  storage = new CloudinaryStorage({
-    cloudinary,
-    params: async (req, file) => {
-      const folder = `ise-placement/${req.user?._id || 'general'}`;
-      const ext = path.extname(file.originalname).toLowerCase().replace('.', '');
-      const userName = (req.user?.name || 'user').toLowerCase().replace(/[^a-z0-9]/g, '-');
-      
-      // Use 'image' for images and PDFs (Cloudinary serves PDFs inline as image type)
-      // Use 'raw' only for docs, xlsx, csv
-      const imageTypes = ['jpg', 'jpeg', 'png', 'pdf'];
-      const resourceType = imageTypes.includes(ext) ? 'image' : 'raw';
-      
-      return {
-        folder,
-        resource_type: resourceType,
-        public_id: `${file.fieldname}-${userName}`,
-        format: ext,
-        overwrite: true,
-      };
-    },
+// Configure Cloudinary
+if (process.env.CLOUDINARY_CLOUD_NAME) {
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
   });
-} else {
-  // Use memory storage — files will be saved to MongoDB
-  storage = multer.memoryStorage();
 }
+
+// Use memory storage — we'll upload to Cloudinary manually in getFileUrl
+const storage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
   const allowed = ['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx', '.xlsx', '.xls', '.csv'];
@@ -69,5 +31,4 @@ const upload = multer({
 });
 
 module.exports = upload;
-module.exports.useCloudinary = useCloudinary;
 module.exports.cloudinary = cloudinary;
