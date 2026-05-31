@@ -2,8 +2,8 @@
   "name": "ise-placement",
   "version": "1.0.0",
   "scripts": {
-    "install-all": "cd backend && npm install --ignore-scripts && cd ../frontend && npm install --ignore-scripts && node node_modules/esbuild/install.js",
-    "build": "cd frontend && npm run build",
+    "install-all": "cd backend && npm install && cd ../frontend && npm install",
+    "build": "cd frontend && npm install && npx vite build",
     "start": "cd backend && node src/server.js"
   }
 }
