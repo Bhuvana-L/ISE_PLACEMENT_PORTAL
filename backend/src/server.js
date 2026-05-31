@@ -35,6 +35,20 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/coordinator', coordinatorRoutes);
 app.use('/api/student', studentRoutes);
 
+// Serve files stored in MongoDB
+app.get('/api/files/:id', async (req, res) => {
+  try {
+    const FileStore = require('./models/FileStore');
+    const file = await FileStore.findById(req.params.id);
+    if (!file) return res.status(404).json({ message: 'File not found' });
+    res.set('Content-Type', file.mimeType);
+    res.set('Content-Disposition', `inline; filename="${file.originalName}"`);
+    res.send(file.data);
+  } catch (err) {
+    res.status(500).json({ message: 'Error retrieving file' });
+  }
+});
+
 // Serve frontend in production
 const frontendPath = path.join(__dirname, '../../frontend/dist');
 app.use(express.static(frontendPath));

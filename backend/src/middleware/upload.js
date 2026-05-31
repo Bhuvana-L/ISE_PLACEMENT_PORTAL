@@ -1,18 +1,27 @@
 const multer = require('multer');
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
-const cloudinary = require('cloudinary').v2;
 const path = require('path');
 const fs = require('fs');
 
-// Configure Cloudinary
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+let cloudinary;
+let CloudinaryStorage;
+let useCloudinary = false;
 
-// Use Cloudinary if credentials are set, otherwise fall back to local storage
-const useCloudinary = !!(process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET);
+try {
+  cloudinary = require('cloudinary').v2;
+  const csMod = require('multer-storage-cloudinary');
+  CloudinaryStorage = csMod.CloudinaryStorage;
+
+  if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
+    cloudinary.config({
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET,
+    });
+    useCloudinary = true;
+  }
+} catch (e) {
+  // Cloudinary not available
+}
 
 let storage;
 
@@ -35,22 +44,8 @@ if (useCloudinary) {
     },
   });
 } else {
-  // Local storage fallback for development
-  const uploadDir = path.join(__dirname, '../../uploads');
-  if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
-
-  storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-      const dest = path.join(uploadDir, req.user._id.toString());
-      if (!fs.existsSync(dest)) fs.mkdirSync(dest, { recursive: true });
-      cb(null, dest);
-    },
-    filename: (req, file, cb) => {
-      const ext = path.extname(file.originalname);
-      const name = file.fieldname + '-' + Date.now() + ext;
-      cb(null, name);
-    },
-  });
+  // Use memory storage — files will be saved to MongoDB
+  storage = multer.memoryStorage();
 }
 
 const fileFilter = (req, file, cb) => {
@@ -70,4 +65,5 @@ const upload = multer({
 });
 
 module.exports = upload;
+module.exports.useCloudinary = useCloudinary;
 module.exports.cloudinary = cloudinary;

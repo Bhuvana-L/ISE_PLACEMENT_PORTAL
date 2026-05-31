@@ -56,10 +56,10 @@ exports.submitForm = async (req, res) => {
 
     const fileUrls = new Map();
     if (req.files) {
-      req.files.forEach((file) => {
-        const url = getFileUrl(file, req.user._id);
+      for (const file of req.files) {
+        const url = await getFileUrl(file, req.user._id);
         fileUrls.set(file.fieldname, url);
-      });
+      }
     }
 
     const submission = await Submission.create({
@@ -102,10 +102,10 @@ exports.updateSubmission = async (req, res) => {
 
     if (req.files && req.files.length > 0) {
       const fileUrls = existing.fileUrls || new Map();
-      req.files.forEach((file) => {
-        const url = getFileUrl(file, req.user._id);
+      for (const file of req.files) {
+        const url = await getFileUrl(file, req.user._id);
         fileUrls.set(file.fieldname, url);
-      });
+      }
       existing.fileUrls = fileUrls;
     }
 
@@ -168,8 +168,8 @@ exports.updateProfile = async (req, res) => {
     }
 
     if (req.files && req.files.length > 0) {
-      req.files.forEach((file) => {
-        const url = getFileUrl(file, req.user._id);
+      for (const file of req.files) {
+        const url = await getFileUrl(file, req.user._id);
         if (file.fieldname === 'resume') updates.resumeUrl = url;
         if (file.fieldname === 'marksheet') updates.marksheetUrl = url;
         // Handle semester marksheets (marksheet_1, marksheet_2, etc.)
@@ -179,14 +179,14 @@ exports.updateProfile = async (req, res) => {
             updates.semMarksheets = req.user.semMarksheets ? [...req.user.semMarksheets] : [];
           }
           const sem = parseInt(semMatch[1]);
-          const existing = updates.semMarksheets.findIndex((m) => m.semester === sem);
-          if (existing >= 0) {
-            updates.semMarksheets[existing].url = url;
+          const existingIdx = updates.semMarksheets.findIndex((m) => m.semester === sem);
+          if (existingIdx >= 0) {
+            updates.semMarksheets[existingIdx].url = url;
           } else {
             updates.semMarksheets.push({ semester: sem, url });
           }
         }
-      });
+      }
     }
 
     const student = await User.findByIdAndUpdate(req.user._id, updates, { new: true }).select('-password');
@@ -199,7 +199,7 @@ exports.updateProfile = async (req, res) => {
 exports.uploadMarksheet = async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
-    const url = getFileUrl(req.file, req.user._id);
+    const url = await getFileUrl(req.file, req.user._id);
     await User.findByIdAndUpdate(req.user._id, { marksheetUrl: url });
     res.json({ url, message: 'Marksheet uploaded successfully' });
   } catch (err) {
