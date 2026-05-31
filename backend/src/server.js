@@ -51,12 +51,26 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => {
-    console.log('MongoDB connected');
-    app.listen(PORT, () =>
-      console.log(`Server running on port ${PORT}`)
-    );
-  })
-  .catch((err) => console.error('MongoDB connection error:', err));
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGO_URI);
+    console.log('MongoDB connected (primary)');
+  } catch (err) {
+    console.error('Primary MongoDB failed:', err.message);
+    if (process.env.MONGO_URI_BACKUP) {
+      try {
+        await mongoose.connect(process.env.MONGO_URI_BACKUP);
+        console.log('MongoDB connected (backup)');
+      } catch (err2) {
+        console.error('Backup MongoDB also failed:', err2.message);
+        process.exit(1);
+      }
+    } else {
+      process.exit(1);
+    }
+  }
+};
+
+connectDB().then(() => {
+  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+});

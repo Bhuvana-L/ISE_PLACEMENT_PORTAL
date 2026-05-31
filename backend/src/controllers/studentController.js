@@ -2,6 +2,7 @@ const User = require('../models/User');
 const Form = require('../models/Form');
 const Submission = require('../models/Submission');
 const path = require('path');
+const getFileUrl = require('../utils/getFileUrl');
 
 exports.getForms = async (req, res) => {
   try {
@@ -56,7 +57,7 @@ exports.submitForm = async (req, res) => {
     const fileUrls = new Map();
     if (req.files) {
       req.files.forEach((file) => {
-        const url = `/uploads/${req.user._id}/${file.filename}`;
+        const url = getFileUrl(file, req.user._id);
         fileUrls.set(file.fieldname, url);
       });
     }
@@ -102,7 +103,7 @@ exports.updateSubmission = async (req, res) => {
     if (req.files && req.files.length > 0) {
       const fileUrls = existing.fileUrls || new Map();
       req.files.forEach((file) => {
-        const url = `/uploads/${req.user._id}/${file.filename}`;
+        const url = getFileUrl(file, req.user._id);
         fileUrls.set(file.fieldname, url);
       });
       existing.fileUrls = fileUrls;
@@ -168,7 +169,7 @@ exports.updateProfile = async (req, res) => {
 
     if (req.files && req.files.length > 0) {
       req.files.forEach((file) => {
-        const url = `/uploads/${req.user._id}/${file.filename}`;
+        const url = getFileUrl(file, req.user._id);
         if (file.fieldname === 'resume') updates.resumeUrl = url;
         if (file.fieldname === 'marksheet') updates.marksheetUrl = url;
         // Handle semester marksheets (marksheet_1, marksheet_2, etc.)
@@ -198,7 +199,7 @@ exports.updateProfile = async (req, res) => {
 exports.uploadMarksheet = async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
-    const url = `/uploads/${req.user._id}/${req.file.filename}`;
+    const url = getFileUrl(req.file, req.user._id);
     await User.findByIdAndUpdate(req.user._id, { marksheetUrl: url });
     res.json({ url, message: 'Marksheet uploaded successfully' });
   } catch (err) {
