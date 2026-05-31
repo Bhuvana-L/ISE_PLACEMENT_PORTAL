@@ -1,41 +1,44 @@
 const path = require('path');
-const { initFirebase } = require('./firebase');
+const { createClient } = require('@supabase/supabase-js');
+
+let supabase = null;
+
+function getSupabase() {
+  if (!supabase && process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY) {
+    supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+  }
+  return supabase;
+}
 
 /**
- * Upload file to Firebase Storage and return a public URL.
- * PDFs and images open inline in browser.
- * Falls back to MongoDB if Firebase fails.
+ * Upload file to Supabase Storage and return a public URL.
+ * PDFs open inline in browser.
+ * Falls back to MongoDB if Supabase fails.
  */
 async function getFileUrl(file, userId, userName) {
-  const bucket = initFirebase();
+  const client = getSupabase();
+  const bucket = process.env.SUPABASE_BUCKET || 'files';
 
-  if (bucket && file.buffer) {
+  if (client && file.buffer) {
     try {
       const safeName = (userName || 'user').toLowerCase().replace(/[^a-z0-9]/g, '-');
       const ext = path.extname(file.originalname).toLowerCase();
-      const filePath = `students/${userId}/${file.fieldname}-${safeName}${ext}`;
+      const filePath = `${userId}/${file.fieldname}-${safeName}${ext}`;
 
-      const fileRef = bucket.file(filePath);
-
-      await fileRef.save(file.buffer, {
-        metadata: {
+      const { data, error } = await client.storage
+        .from(bucket)
+        .upload(filePath, file.buffer, {
           contentType: file.mimetype,
-          metadata: {
-            uploadedBy: userId.toString(),
-            originalName: file.originalname,
-          },
-        },
-      });
+          upsert: true,
+        });
 
-      // Make file publicly accessible
-      await fileRef.makePublic();
+      if (error) throw error;
 
-      // Return public URL
-      const publicUrl = `https://storage.googleapis.com/${bucket.name}/${filePath}`;
-      return publicUrl;
+      // Get public URL
+      const { data: urlData } = client.storage.from(bucket).getPublicUrl(filePath);
+      return urlData.publicUrl;
     } catch (err) {
-      console.error('Firebase upload failed:', err.message);
-      // Fall through to MongoDB fallback
+      console.error('Supabase upload failed:', err.message);
     }
   }
 
