@@ -35,12 +35,12 @@ if (useCloudinary) {
       if (['.pdf', '.doc', '.docx', '.xlsx', '.xls', '.csv'].includes(ext)) {
         resourceType = 'raw';
       }
-      // Name file as: fieldname-username (e.g. resume-bhuvana-l)
+      // Name file as: fieldname-username.ext (e.g. resume-bhuvana-l.pdf)
       const userName = (req.user?.name || 'user').toLowerCase().replace(/[^a-z0-9]/g, '-');
       return {
         folder,
         resource_type: resourceType,
-        public_id: `${file.fieldname}-${userName}`,
+        public_id: `${file.fieldname}-${userName}${ext}`,
         allowed_formats: ['pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx', 'xlsx', 'xls', 'csv'],
       };
     },
