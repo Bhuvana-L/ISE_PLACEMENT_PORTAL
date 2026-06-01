@@ -83,8 +83,9 @@ export default function StudentProfile() {
       if (sgpaList.length > 0) {
         fd.append('sgpaList', JSON.stringify(sgpaList));
       }
-      if (section === 'academics' && cgpaInput) {
-        fd.append('cgpa', cgpaInput);
+      // Always send cgpa when editing academics
+      if (section === 'academics') {
+        fd.append('cgpa', cgpaInput || '');
       }
 
       // Files
@@ -263,7 +264,7 @@ export default function StudentProfile() {
         </div>
         <div className="grid grid-cols-2 gap-3 mb-3">
           <div className="bg-indigo-50 rounded-lg p-3 text-center">
-            <p className="text-2xl font-bold text-indigo-700">{profile.cgpa?.toFixed(2) || '—'}</p>
+            <p className="text-2xl font-bold text-indigo-700">{profile.cgpa?.toFixed(4) || '—'}</p>
             <p className="text-xs text-indigo-600">CGPA</p>
           </div>
           <div className="bg-red-50 rounded-lg p-3 text-center">

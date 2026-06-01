@@ -158,7 +158,7 @@ exports.updateProfile = async (req, res) => {
       const parsedSgpa = typeof sgpaList === 'string' ? JSON.parse(sgpaList) : sgpaList;
       if (parsedSgpa.length > 0) {
         updates.sgpaList = parsedSgpa;
-        // Auto-calculate CGPA from SGPA using the formula: Σ(SGPAᵢ × Creditsᵢ) / ΣCreditsᵢ
+        // Auto-calculate CGPA from SGPA: Σ(SGPAᵢ × Creditsᵢ) / ΣCreditsᵢ
         const totalWeighted = parsedSgpa.reduce((sum, s) => sum + s.sgpa * s.credits, 0);
         const totalCredits = parsedSgpa.reduce((sum, s) => sum + s.credits, 0);
         if (totalCredits > 0) {
@@ -167,9 +167,10 @@ exports.updateProfile = async (req, res) => {
       }
     }
 
-    // Allow manual CGPA override — takes priority if explicitly set
-    if (req.body.cgpa !== undefined && req.body.cgpa !== '') {
-      const manualCgpa = typeof req.body.cgpa === 'string' ? parseFloat(req.body.cgpa) : req.body.cgpa;
+    // Manual CGPA override — takes priority over auto-calculation if explicitly set
+    const manualCgpaRaw = req.body.cgpa;
+    if (manualCgpaRaw !== undefined && manualCgpaRaw !== '' && manualCgpaRaw !== 'undefined') {
+      const manualCgpa = parseFloat(manualCgpaRaw);
       if (!isNaN(manualCgpa) && manualCgpa > 0) {
         updates.cgpa = manualCgpa;
       }
