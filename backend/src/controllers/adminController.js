@@ -269,8 +269,8 @@ exports.exportStudentProfiles = async (req, res) => {
         linkedin: s.linkedinUrl || '',
         github: s.githubUrl || '',
         portfolio: s.portfolioUrl || '',
-        resume: s.resumeUrl ? 'View Resume' : '',
-        marksheet: s.marksheetUrl ? 'View Marksheet' : '',
+        resume: s.resumeUrl ? `${s.name} - Resume` : '',
+        marksheet: s.marksheetUrl ? `${s.name} - Marksheet` : '',
         sem1: sgpaMap[1], sem2: sgpaMap[2], sem3: sgpaMap[3], sem4: sgpaMap[4],
         sem5: sgpaMap[5], sem6: sgpaMap[6], sem7: sgpaMap[7], sem8: sgpaMap[8],
       };
@@ -280,7 +280,7 @@ exports.exportStudentProfiles = async (req, res) => {
         const resumeColIndex = exportColumns.findIndex((c) => c.key === 'resume');
         if (resumeColIndex >= 0) {
           const cell = addedRow.getCell(resumeColIndex + 1);
-          cell.value = { text: 'View Resume', hyperlink: s.resumeUrl };
+          cell.value = { text: `${s.name} - Resume`, hyperlink: s.resumeUrl };
           cell.font = { color: { argb: 'FF4F46E5' }, underline: true };
         }
       }
@@ -288,7 +288,7 @@ exports.exportStudentProfiles = async (req, res) => {
         const colIdx = exportColumns.findIndex((c) => c.key === 'marksheet');
         if (colIdx >= 0) {
           const cell = addedRow.getCell(colIdx + 1);
-          cell.value = { text: 'View Marksheet', hyperlink: s.marksheetUrl };
+          cell.value = { text: `${s.name} - Marksheet`, hyperlink: s.marksheetUrl };
           cell.font = { color: { argb: 'FF4F46E5' }, underline: true };
         }
       }
@@ -416,7 +416,7 @@ exports.exportStudentsList = async (req, res) => {
         batch: s.batch, cgpa: s.cgpa, backlogs: s.backlogs || 0, activeBacklogs: s.activeBacklogs || 0,
         sem1: sgpaMap[1], sem2: sgpaMap[2], sem3: sgpaMap[3], sem4: sgpaMap[4],
         sem5: sgpaMap[5], sem6: sgpaMap[6], sem7: sgpaMap[7], sem8: sgpaMap[8],
-        resume: s.resumeUrl ? 'View Resume' : 'Not uploaded',
+        resume: s.resumeUrl ? `${s.name} - Resume` : 'Not uploaded',
         verified: s.sentToAdmin ? 'Received' : 'Pending',
       };
       const addedRow = sheet.addRow(row);
@@ -427,7 +427,7 @@ exports.exportStudentsList = async (req, res) => {
         const resumeColIndex = exportColumns.findIndex((c) => c.key === 'resume');
         if (resumeColIndex >= 0) {
           const cell = addedRow.getCell(resumeColIndex + 1);
-          cell.value = { text: 'View Resume', hyperlink: `${baseUrl}${s.resumeUrl}` };
+          cell.value = { text: `${s.name} - Resume`, hyperlink: `${baseUrl}${s.resumeUrl}` };
           cell.font = { color: { argb: 'FF4F46E5' }, underline: true };
         }
       }

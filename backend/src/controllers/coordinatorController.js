@@ -344,8 +344,8 @@ exports.exportStudentProfiles = async (req, res) => {
         linkedin: s.linkedinUrl || '',
         github: s.githubUrl || '',
         portfolio: s.portfolioUrl || '',
-        resume: s.resumeUrl ? 'View Resume' : '',
-        marksheet: s.marksheetUrl ? 'View Marksheet' : '',
+        resume: s.resumeUrl ? `${s.name} - Resume` : '',
+        marksheet: s.marksheetUrl ? `${s.name} - Marksheet` : '',
         sem1: sgpaMap[1], sem2: sgpaMap[2], sem3: sgpaMap[3], sem4: sgpaMap[4],
         sem5: sgpaMap[5], sem6: sgpaMap[6], sem7: sgpaMap[7], sem8: sgpaMap[8],
       };
@@ -355,7 +355,7 @@ exports.exportStudentProfiles = async (req, res) => {
         const resumeColIndex = exportColumns.findIndex((c) => c.key === 'resume');
         if (resumeColIndex >= 0) {
           const cell = addedRow.getCell(resumeColIndex + 1);
-          cell.value = { text: 'View Resume', hyperlink: s.resumeUrl };
+          cell.value = { text: `${s.name || 'Student'} - Resume`, hyperlink: s.resumeUrl };
           cell.font = { color: { argb: 'FF4F46E5' }, underline: true };
         }
       }
@@ -363,7 +363,7 @@ exports.exportStudentProfiles = async (req, res) => {
         const colIdx = exportColumns.findIndex((c) => c.key === 'marksheet');
         if (colIdx >= 0) {
           const cell = addedRow.getCell(colIdx + 1);
-          cell.value = { text: 'View Marksheet', hyperlink: s.marksheetUrl };
+          cell.value = { text: `${s.name || 'Student'} - Marksheet`, hyperlink: s.marksheetUrl };
           cell.font = { color: { argb: 'FF4F46E5' }, underline: true };
         }
       }
@@ -537,6 +537,41 @@ exports.updateAllowedStudent = async (req, res) => {
   }
 };
 
+exports.getStudentFiles = async (req, res) => {
+  try {
+    const batch = req.user.assignedBatch;
+    const students = await User.find({ role: 'student', batch })
+      .select('name usn resumeUrl marksheetUrl semMarksheets certifications courses')
+      .sort({ usn: 1 });
+
+    const fileList = students.map((s) => ({
+      usn: s.usn,
+      name: s.name,
+      resume: s.resumeUrl ? { label: `${s.name} - Resume`, url: s.resumeUrl } : null,
+      marksheet: s.marksheetUrl ? { label: `${s.name} - Marksheet`, url: s.marksheetUrl } : null,
+      semMarksheets: (s.semMarksheets || []).map((m) => ({
+        label: `${s.name} - Sem ${m.semester} Marksheet`,
+        url: m.url,
+        semester: m.semester,
+      })),
+      certificates: [
+        ...(s.certifications || []).filter((c) => c.url).map((c) => ({
+          label: `${s.name} - ${c.title}`,
+          url: c.url,
+        })),
+        ...(s.courses || []).filter((c) => c.certificateUrl).map((c) => ({
+          label: `${s.name} - ${c.name} Certificate`,
+          url: c.certificateUrl,
+        })),
+      ],
+    }));
+
+    res.json({ students: fileList });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 // ===== Updated Student List (auto-synced from profiles) =====
 
 exports.getUpdatedStudentList = async (req, res) => {
@@ -601,7 +636,7 @@ exports.exportUpdatedStudentList = async (req, res) => {
         cgpa: s.cgpa, backlogs: s.backlogs || 0, activeBacklogs: s.activeBacklogs || 0,
         sem1: sgpaMap[1], sem2: sgpaMap[2], sem3: sgpaMap[3], sem4: sgpaMap[4],
         sem5: sgpaMap[5], sem6: sgpaMap[6], sem7: sgpaMap[7], sem8: sgpaMap[8],
-        resume: s.resumeUrl ? 'View Resume' : 'Not uploaded',
+        resume: s.resumeUrl ? `${s.name} - Resume` : 'Not uploaded',
         verified: s.isVerified ? 'Yes' : 'No',
       };
       const addedRow = sheet.addRow(row);
@@ -612,7 +647,7 @@ exports.exportUpdatedStudentList = async (req, res) => {
         const resumeColIndex = exportColumns.findIndex((c) => c.key === 'resume');
         if (resumeColIndex >= 0) {
           const cell = addedRow.getCell(resumeColIndex + 1);
-          cell.value = { text: 'View Resume', hyperlink: `${baseUrl}${s.resumeUrl}` };
+          cell.value = { text: `${s.name} - Resume`, hyperlink: `${baseUrl}${s.resumeUrl}` };
           cell.font = { color: { argb: 'FF4F46E5' }, underline: true };
         }
       }

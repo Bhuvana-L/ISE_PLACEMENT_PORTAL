@@ -25,6 +25,7 @@ const {
   updateAllowedStudent,
   getUpdatedStudentList,
   exportUpdatedStudentList,
+  getStudentFiles,
 } = require('../controllers/coordinatorController');
 const { protect, restrictTo } = require('../middleware/auth');
 const upload = require('../middleware/upload');
@@ -72,5 +73,8 @@ router.delete('/allowed-students/:id', deleteAllowedStudent);
 // Updated student list
 router.get('/updated-list', getUpdatedStudentList);
 router.get('/export/updated-list', exportUpdatedStudentList);
+
+// Student files/documents
+router.get('/student-files', getStudentFiles);
 
 module.exports = router;

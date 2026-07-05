@@ -126,6 +126,7 @@ export default function CoordDashboard() {
           { key: 'overview', label: 'Overview' },
           { key: 'batchStudents', label: `${user?.assignedBatch || ''} Students` },
           { key: 'updatedList', label: 'Updated Student List' },
+          { key: 'documents', label: 'Student Documents' },
         ].map((t) => (
           <button
             key={t.key}
@@ -273,6 +274,11 @@ export default function CoordDashboard() {
       {/* Updated Student List Tab */}
       {tab === 'updatedList' && (
         <UpdatedStudentList user={user} />
+      )}
+
+      {/* Student Documents Tab */}
+      {tab === 'documents' && (
+        <StudentDocuments />
       )}
 
       {/* Add Student Modal */}
@@ -502,6 +508,115 @@ function UpdatedStudentList({ user }) {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+
+// ===== Student Documents Sub-Component =====
+function StudentDocuments() {
+  const [students, setStudents] = useState([]);
+  const [activeSection, setActiveSection] = useState('resume'); // resume, marksheet, semMarksheets, certificates
+  const [search, setSearch] = useState('');
+
+  useEffect(() => {
+    api.get('/coordinator/student-files').then(({ data }) => setStudents(data.students));
+  }, []);
+
+  const sections = [
+    { key: 'resume', label: 'Resumes' },
+    { key: 'marksheet', label: 'Marksheets' },
+    { key: 'semMarksheets', label: 'Semester Marksheets' },
+    { key: 'certificates', label: 'Certificates' },
+  ];
+
+  const filtered = students.filter((s) => {
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return s.name?.toLowerCase().includes(q) || s.usn?.toLowerCase().includes(q);
+  });
+
+  const getFiles = (student) => {
+    if (activeSection === 'resume') return student.resume ? [student.resume] : [];
+    if (activeSection === 'marksheet') return student.marksheet ? [student.marksheet] : [];
+    if (activeSection === 'semMarksheets') return student.semMarksheets || [];
+    if (activeSection === 'certificates') return student.certificates || [];
+    return [];
+  };
+
+  const totalCount = filtered.reduce((sum, s) => sum + getFiles(s).length, 0);
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h2 className="text-lg font-semibold text-gray-900">Student Documents</h2>
+        <p className="text-sm text-gray-500">View and download all uploaded files, organised by student USN</p>
+      </div>
+
+      {/* Section Tabs */}
+      <div className="flex gap-2 flex-wrap">
+        {sections.map((s) => (
+          <button
+            key={s.key}
+            onClick={() => setActiveSection(s.key)}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+              activeSection === s.key ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            {s.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Search */}
+      <div className="relative">
+        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+        <input className="input pl-9" placeholder="Search by name or USN..." value={search} onChange={(e) => setSearch(e.target.value)} />
+      </div>
+
+      <p className="text-sm text-gray-500">{totalCount} file(s) found</p>
+
+      {/* Files List */}
+      <div className="space-y-3">
+        {filtered.map((student) => {
+          const files = getFiles(student);
+          if (files.length === 0) return null;
+          return (
+            <div key={student.usn} className="card">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-sm">
+                  {student.name?.[0]}
+                </div>
+                <div>
+                  <p className="font-medium text-gray-900 text-sm">{student.name}</p>
+                  <p className="text-xs text-gray-500">{student.usn}</p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                {files.map((file, i) => (
+                  <div key={i} className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2">
+                    <p className="text-sm text-gray-700 truncate flex-1">{file.label}</p>
+                    <a
+                      href={file.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      download
+                      className="ml-3 flex items-center gap-1 text-indigo-600 hover:text-indigo-800 text-xs font-medium whitespace-nowrap"
+                    >
+                      <Download size={13} /> Download
+                    </a>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+        {filtered.every((s) => getFiles(s).length === 0) && (
+          <div className="card text-center py-12 text-gray-400">
+            <p>No {sections.find((s) => s.key === activeSection)?.label.toLowerCase()} uploaded yet</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
