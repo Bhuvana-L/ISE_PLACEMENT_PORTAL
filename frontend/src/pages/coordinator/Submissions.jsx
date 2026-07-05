@@ -181,9 +181,18 @@ export default function CoordSubmissions() {
                 <tr key={s._id} className="hover:bg-gray-50">
                   <td className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap">{s.student?.name}</td>
                   <td className="px-4 py-3 text-gray-600">{s.student?.usn}</td>
-                  {fieldLabels.map((label) => (
-                    <td key={label} className="px-4 py-3 text-gray-700 max-w-48 truncate">{responses[label] || '—'}</td>
-                  ))}
+                  {fieldLabels.map((label) => {
+                    const val = responses[label];
+                    const isUrl = typeof val === 'string' && (val.startsWith('http') || val.startsWith('/api/files/'));
+                    return (
+                      <td key={label} className="px-4 py-3 text-gray-700 max-w-48">
+                        {isUrl
+                          ? <a href={val} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline text-xs flex items-center gap-1"><ExternalLink size={12} /> View file</a>
+                          : <span className="truncate block">{val || '—'}</span>
+                        }
+                      </td>
+                    );
+                  })}
                   <td className="px-4 py-3">
                     {s.status === 'verified'
                       ? <span className="badge-green">Verified</span>

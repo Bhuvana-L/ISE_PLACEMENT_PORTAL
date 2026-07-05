@@ -238,10 +238,28 @@ exports.exportSubmissions = async (req, res) => {
       };
       if (s.responses) {
         for (const [k, v] of s.responses) {
-          row[k] = String(v);
+          const isUrl = typeof v === 'string' && (v.startsWith('http') || v.startsWith('/api/files/'));
+          row[k] = isUrl ? 'View file' : String(v);
         }
       }
-      sheet.addRow(row);
+      const addedRow = sheet.addRow(row);
+
+      // Make file URL cells clickable hyperlinks
+      if (s.responses) {
+        const allColumns = [...baseColumns, ...fieldColumns, { key: 'status' }];
+        for (const [k, v] of s.responses) {
+          const isUrl = typeof v === 'string' && (v.startsWith('http') || v.startsWith('/api/files/'));
+          if (isUrl) {
+            const colIdx = allColumns.findIndex((c) => c.key === k);
+            if (colIdx >= 0) {
+              const fullUrl = v.startsWith('/') ? `${req.protocol}://${req.get('host')}${v}` : v;
+              const cell = addedRow.getCell(colIdx + 1);
+              cell.value = { text: 'View file', hyperlink: fullUrl };
+              cell.font = { color: { argb: 'FF4F46E5' }, underline: true };
+            }
+          }
+        }
+      }
     });
 
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');

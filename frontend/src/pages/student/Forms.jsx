@@ -99,8 +99,11 @@ export default function StudentForms() {
       const fd = new FormData();
       const textResponses = {};
       Object.entries(responses).forEach(([k, v]) => {
-        if (v instanceof File) fd.append(k, v);
-        else textResponses[k] = v;
+        if (v instanceof File) {
+          fd.append(k, v);  // file fields sent by their label name
+        } else {
+          textResponses[k] = v;
+        }
       });
       fd.append('responses', JSON.stringify(textResponses));
 

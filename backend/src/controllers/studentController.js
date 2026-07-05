@@ -54,11 +54,11 @@ exports.submitForm = async (req, res) => {
       Object.entries(parsed).forEach(([k, v]) => responses.set(k, v));
     }
 
-    const fileUrls = new Map();
+    // Upload files to Supabase and store URLs in responses (so coordinator can see them)
     if (req.files) {
       for (const file of req.files) {
         const url = await getFileUrl(file, req.user._id, req.user.name);
-        fileUrls.set(file.fieldname, url);
+        if (url) responses.set(file.fieldname, url);
       }
     }
 
@@ -67,7 +67,6 @@ exports.submitForm = async (req, res) => {
       student: req.user._id,
       batch: req.user.batch,
       responses,
-      fileUrls,
     });
 
     res.status(201).json({ submission });
@@ -100,13 +99,12 @@ exports.updateSubmission = async (req, res) => {
       Object.entries(parsed).forEach(([k, v]) => responses.set(k, v));
     }
 
+    // Upload new files to Supabase and store URLs in responses
     if (req.files && req.files.length > 0) {
-      const fileUrls = existing.fileUrls || new Map();
       for (const file of req.files) {
         const url = await getFileUrl(file, req.user._id, req.user.name);
-        fileUrls.set(file.fieldname, url);
+        if (url) responses.set(file.fieldname, url);
       }
-      existing.fileUrls = fileUrls;
     }
 
     existing.responses = responses;
