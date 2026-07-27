@@ -572,6 +572,92 @@ exports.getStudentFiles = async (req, res) => {
   }
 };
 
+exports.downloadStudentFilesZip = async (req, res) => {
+  try {
+    const JSZip = require('jszip');
+    const fetch = (...args) => import('node-fetch').then(({ default: f }) => f(...args));
+    const batch = req.user.assignedBatch;
+    const { section } = req.query; // resume, marksheet, sem_1..8, certificates
+
+    const students = await User.find({ role: 'student', batch })
+      .select('name usn resumeUrl marksheetUrl semMarksheets certifications courses')
+      .sort({ usn: 1 });
+
+    const zip = new JSZip();
+    const folderName = section || 'all-documents';
+    const folder = zip.folder(folderName);
+    let fileCount = 0;
+
+    const downloadFile = async (url, filename) => {
+      try {
+        const fullUrl = url.startsWith('http') ? url : `${req.protocol}://${req.get('host')}${url}`;
+        const response = await fetch(fullUrl);
+        if (!response.ok) return;
+        const buffer = await response.buffer();
+        folder.file(filename, buffer);
+        fileCount++;
+      } catch (e) {
+        // Skip failed files
+      }
+    };
+
+    for (const s of students) {
+      const safeName = s.usn || s.name;
+
+      if (!section || section === 'resume') {
+        if (s.resumeUrl) {
+          const ext = s.resumeUrl.split('.').pop().split('?')[0] || 'pdf';
+          await downloadFile(s.resumeUrl, `${safeName}_Resume.${ext}`);
+        }
+      }
+
+      if (!section || section === 'marksheet') {
+        if (s.marksheetUrl) {
+          const ext = s.marksheetUrl.split('.').pop().split('?')[0] || 'pdf';
+          await downloadFile(s.marksheetUrl, `${safeName}_Marksheet.${ext}`);
+        }
+      }
+
+      if (!section || section.startsWith('sem_')) {
+        for (const m of (s.semMarksheets || [])) {
+          if (!section || section === `sem_${m.semester}`) {
+            const ext = m.url.split('.').pop().split('?')[0] || 'pdf';
+            await downloadFile(m.url, `${safeName}_Sem${m.semester}_Marksheet.${ext}`);
+          }
+        }
+      }
+
+      if (!section || section === 'certificates') {
+        for (const c of (s.certifications || [])) {
+          if (c.url) {
+            const ext = c.url.split('.').pop().split('?')[0] || 'pdf';
+            const title = c.title?.replace(/[^a-z0-9]/gi, '_') || 'Certificate';
+            await downloadFile(c.url, `${safeName}_${title}.${ext}`);
+          }
+        }
+        for (const c of (s.courses || [])) {
+          if (c.certificateUrl) {
+            const ext = c.certificateUrl.split('.').pop().split('?')[0] || 'pdf';
+            const name = c.name?.replace(/[^a-z0-9]/gi, '_') || 'Course';
+            await downloadFile(c.certificateUrl, `${safeName}_${name}_Cert.${ext}`);
+          }
+        }
+      }
+    }
+
+    if (fileCount === 0) {
+      return res.status(404).json({ message: 'No files found for this section' });
+    }
+
+    const zipBuffer = await zip.generateAsync({ type: 'nodebuffer' });
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', `attachment; filename=batch_${batch}_${folderName}.zip`);
+    res.send(zipBuffer);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 // ===== Updated Student List (auto-synced from profiles) =====
 
 exports.getUpdatedStudentList = async (req, res) => {

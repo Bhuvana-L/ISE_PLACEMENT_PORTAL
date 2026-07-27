@@ -516,18 +516,26 @@ function UpdatedStudentList({ user }) {
 // ===== Student Documents Sub-Component =====
 function StudentDocuments() {
   const [students, setStudents] = useState([]);
-  const [activeSection, setActiveSection] = useState('resume'); // resume, marksheet, semMarksheets, certificates
+  const [activeSection, setActiveSection] = useState('resume');
   const [search, setSearch] = useState('');
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     api.get('/coordinator/student-files').then(({ data }) => setStudents(data.students));
   }, []);
 
   const sections = [
-    { key: 'resume', label: 'Resumes' },
-    { key: 'marksheet', label: 'Marksheets' },
-    { key: 'semMarksheets', label: 'Semester Marksheets' },
-    { key: 'certificates', label: 'Certificates' },
+    { key: 'resume', label: 'Resumes', apiKey: 'resume' },
+    { key: 'marksheet', label: 'Overall Marksheets', apiKey: 'marksheet' },
+    { key: 'sem_1', label: 'Sem 1 Marksheets', apiKey: 'sem_1' },
+    { key: 'sem_2', label: 'Sem 2 Marksheets', apiKey: 'sem_2' },
+    { key: 'sem_3', label: 'Sem 3 Marksheets', apiKey: 'sem_3' },
+    { key: 'sem_4', label: 'Sem 4 Marksheets', apiKey: 'sem_4' },
+    { key: 'sem_5', label: 'Sem 5 Marksheets', apiKey: 'sem_5' },
+    { key: 'sem_6', label: 'Sem 6 Marksheets', apiKey: 'sem_6' },
+    { key: 'sem_7', label: 'Sem 7 Marksheets', apiKey: 'sem_7' },
+    { key: 'sem_8', label: 'Sem 8 Marksheets', apiKey: 'sem_8' },
+    { key: 'certificates', label: 'Certificates', apiKey: 'certificates' },
   ];
 
   const filtered = students.filter((s) => {
@@ -539,28 +547,58 @@ function StudentDocuments() {
   const getFiles = (student) => {
     if (activeSection === 'resume') return student.resume ? [student.resume] : [];
     if (activeSection === 'marksheet') return student.marksheet ? [student.marksheet] : [];
-    if (activeSection === 'semMarksheets') return student.semMarksheets || [];
     if (activeSection === 'certificates') return student.certificates || [];
+    if (activeSection.startsWith('sem_')) {
+      const sem = parseInt(activeSection.split('_')[1]);
+      return student.semMarksheets.filter((m) => m.semester === sem);
+    }
     return [];
   };
 
   const totalCount = filtered.reduce((sum, s) => sum + getFiles(s).length, 0);
 
+  const handleDownloadZip = async () => {
+    setDownloading(true);
+    try {
+      const section = sections.find((s) => s.key === activeSection);
+      const response = await api.get(`/coordinator/student-files/download?section=${activeSection}`, { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `${section?.label || activeSection}.zip`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      toast.error('No files to download or download failed');
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
-      <div>
-        <h2 className="text-lg font-semibold text-gray-900">Student Documents</h2>
-        <p className="text-sm text-gray-500">View and download all uploaded files, organised by student USN</p>
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900">Student Documents</h2>
+          <p className="text-sm text-gray-500">All uploaded files organised by category — sorted by USN</p>
+        </div>
+        <button onClick={handleDownloadZip} disabled={downloading} className="btn-primary flex items-center gap-2 text-sm">
+          <Download size={15} /> {downloading ? 'Preparing ZIP...' : `Download ${sections.find(s => s.key === activeSection)?.label} ZIP`}
+        </button>
       </div>
 
-      {/* Section Tabs */}
+      {/* Section Pills */}
       <div className="flex gap-2 flex-wrap">
         {sections.map((s) => (
           <button
             key={s.key}
             onClick={() => setActiveSection(s.key)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
-              activeSection === s.key ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            className={`px-3 py-1.5 rounded-full text-xs font-medium transition border ${
+              activeSection === s.key
+                ? 'bg-indigo-600 text-white border-indigo-600'
+                : 'bg-white text-gray-600 border-gray-300 hover:border-indigo-400 hover:text-indigo-600'
             }`}
           >
             {s.label}
@@ -574,36 +612,35 @@ function StudentDocuments() {
         <input className="input pl-9" placeholder="Search by name or USN..." value={search} onChange={(e) => setSearch(e.target.value)} />
       </div>
 
-      <p className="text-sm text-gray-500">{totalCount} file(s) found</p>
+      <p className="text-xs text-gray-500">{totalCount} file(s) in this section</p>
 
-      {/* Files List */}
-      <div className="space-y-3">
+      {/* Files by Student */}
+      <div className="space-y-2">
         {filtered.map((student) => {
           const files = getFiles(student);
           if (files.length === 0) return null;
           return (
-            <div key={student.usn} className="card">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-sm">
+            <div key={student.usn} className="card py-3">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-xs flex-shrink-0">
                   {student.name?.[0]}
                 </div>
-                <div>
+                <div className="flex-1 min-w-0">
                   <p className="font-medium text-gray-900 text-sm">{student.name}</p>
-                  <p className="text-xs text-gray-500">{student.usn}</p>
+                  <p className="text-xs text-gray-400">{student.usn}</p>
                 </div>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1.5 pl-10">
                 {files.map((file, i) => (
                   <div key={i} className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2">
-                    <p className="text-sm text-gray-700 truncate flex-1">{file.label}</p>
+                    <p className="text-xs text-gray-700 truncate flex-1">{file.label}</p>
                     <a
                       href={file.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      download
                       className="ml-3 flex items-center gap-1 text-indigo-600 hover:text-indigo-800 text-xs font-medium whitespace-nowrap"
                     >
-                      <Download size={13} /> Download
+                      <Download size={12} /> View / Download
                     </a>
                   </div>
                 ))}
@@ -613,7 +650,8 @@ function StudentDocuments() {
         })}
         {filtered.every((s) => getFiles(s).length === 0) && (
           <div className="card text-center py-12 text-gray-400">
-            <p>No {sections.find((s) => s.key === activeSection)?.label.toLowerCase()} uploaded yet</p>
+            <Download size={28} className="mx-auto mb-2 opacity-30" />
+            <p className="text-sm">No {sections.find((s) => s.key === activeSection)?.label.toLowerCase()} uploaded yet</p>
           </div>
         )}
       </div>

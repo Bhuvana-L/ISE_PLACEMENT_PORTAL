@@ -26,6 +26,7 @@ const {
   getUpdatedStudentList,
   exportUpdatedStudentList,
   getStudentFiles,
+  downloadStudentFilesZip,
 } = require('../controllers/coordinatorController');
 const { protect, restrictTo } = require('../middleware/auth');
 const upload = require('../middleware/upload');
@@ -76,5 +77,6 @@ router.get('/export/updated-list', exportUpdatedStudentList);
 
 // Student files/documents
 router.get('/student-files', getStudentFiles);
+router.get('/student-files/download', downloadStudentFilesZip);
 
 module.exports = router;
